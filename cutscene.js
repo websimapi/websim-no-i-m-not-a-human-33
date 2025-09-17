@@ -5,7 +5,7 @@ import { animateBirds, stopBirds } from './birds.js';
 export async function startCutscene(){
   const cs=document.getElementById('cutscene'), img=document.createElement('img'); img.id='cutscene-image'; img.alt='Cutscene scene'; cs.prepend(img);
   const canvas=document.getElementById('cutscene-canvas'); const loading=cs.querySelector('.cutscene-loading'); cs.style.display='flex'; loading.style.display='grid';
-  let posterCleanup = null;
+  let posterizeEffect = null;
   let transitionStarted = false;
   let zoomRafId = null;
 
@@ -21,7 +21,7 @@ export async function startCutscene(){
 
   img.onload=()=>{ 
     loading.style.display='none'; 
-    posterCleanup = applyPosterizeToImage(canvas, img, 5.0, 0.12); 
+    posterizeEffect = applyPosterizeToImage(canvas, img, 5.0, 0.12); 
     canvas.classList.add('reveal'); 
     img.style.display='none'; 
     animateBirds(()=>goNext()); 
@@ -40,11 +40,11 @@ export async function startCutscene(){
 
     canvas.classList.remove('reveal');
     await new Promise(r=>setTimeout(r, 1200));
-    if (posterCleanup) { try{ posterCleanup(); }catch{} }
+    if (posterizeEffect) { try{ posterizeEffect.cleanup(); }catch{} }
     const img2 = new Image(); img2.alt='Cutscene scene 2 - roadside and distant ruins';
     const canvasWrapper = document.getElementById('cutscene-canvas-wrapper');
     img2.onload = ()=>{ 
-      posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
+      posterizeEffect = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
       requestAnimationFrame(()=>{ 
         canvas.classList.add('reveal', 'drive-zoom'); 
         
@@ -59,6 +59,9 @@ export async function startCutscene(){
           scale += zoomSpeed * deltaTime;
           if (canvasWrapper) {
               canvasWrapper.style.transform = `scale(${scale})`;
+          }
+          if (posterizeEffect) {
+              posterizeEffect.setUniforms({ scale: scale });
           }
 
           zoomRafId = requestAnimationFrame(zoomLoop);
