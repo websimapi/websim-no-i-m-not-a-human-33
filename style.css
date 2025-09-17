@@ -592,7 +592,7 @@ h1 .not-word.pulse-red { animation: notPulse 1.2s ease; }
 
 #cutscene canvas.drive-zoom {
   transform-origin: 50% 60%;
-  animation: continuousDriveZoomAndBounce 4s linear infinite;
+  animation: roadBounce 4s linear infinite;
   will-change: transform;
 }
 

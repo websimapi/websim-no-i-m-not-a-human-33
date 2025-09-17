@@ -7,9 +7,14 @@ export async function startCutscene(){
   const canvas=document.getElementById('cutscene-canvas'); const loading=cs.querySelector('.cutscene-loading'); cs.style.display='flex'; loading.style.display='grid';
   let posterCleanup = null;
   let transitionStarted = false;
+  let zoomRafId = null;
 
   const handleSkip = () => {
       if (transitionStarted) return;
+      if (zoomRafId) {
+        cancelAnimationFrame(zoomRafId);
+        zoomRafId = null;
+      }
       stopBirds();
       goNext();
   };
@@ -37,7 +42,27 @@ export async function startCutscene(){
     await new Promise(r=>setTimeout(r, 1200));
     if (posterCleanup) { try{ posterCleanup(); }catch{} }
     const img2 = new Image(); img2.alt='Cutscene scene 2 - roadside and distant ruins';
-    img2.onload = ()=>{ posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); requestAnimationFrame(()=>{ canvas.classList.add('reveal', 'drive-zoom'); }); };
+    img2.onload = ()=>{ 
+      posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
+      requestAnimationFrame(()=>{ 
+        canvas.classList.add('reveal', 'drive-zoom'); 
+        
+        let scale = 1.0;
+        let lastTime = performance.now();
+        const zoomSpeed = 0.05; // Adjust this value to control zoom speed (scale increase per second)
+
+        function zoomLoop(currentTime) {
+          const deltaTime = (currentTime - lastTime) / 1000; // time in seconds
+          lastTime = currentTime;
+          
+          scale += zoomSpeed * deltaTime;
+          canvas.style.transform = `scale(${scale})`;
+
+          zoomRafId = requestAnimationFrame(zoomLoop);
+        }
+        zoomRafId = requestAnimationFrame(zoomLoop);
+      }); 
+    };
     img2.src = 'cutscene_roadside.png';
   }
 }
