@@ -33,12 +33,11 @@ export async function startCutscene(){
     transitionStarted = true;
     cs.removeEventListener('click', handleSkip);
 
-    canvas.classList.remove('reveal'); canvas.classList.remove('drive-zoom'); // fade out and reset zoom
+    canvas.classList.remove('reveal');
     await new Promise(r=>setTimeout(r, 1200));
     if (posterCleanup) { try{ posterCleanup(); }catch{} }
     const img2 = new Image(); img2.alt='Cutscene scene 2 - roadside and distant ruins';
-    img2.onload = ()=>{ posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); requestAnimationFrame(()=>{ canvas.classList.add('reveal'); canvas.classList.add('drive-zoom'); }); };
+    img2.onload = ()=>{ posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); requestAnimationFrame(()=>{ canvas.classList.add('reveal', 'drive-zoom'); }); };
     img2.src = 'cutscene_roadside.png';
   }
 }
-
