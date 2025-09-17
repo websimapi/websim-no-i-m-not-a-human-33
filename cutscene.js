@@ -42,6 +42,7 @@ export async function startCutscene(){
     await new Promise(r=>setTimeout(r, 1200));
     if (posterCleanup) { try{ posterCleanup(); }catch{} }
     const img2 = new Image(); img2.alt='Cutscene scene 2 - roadside and distant ruins';
+    const canvasWrapper = document.getElementById('cutscene-canvas-wrapper');
     img2.onload = ()=>{ 
       posterCleanup = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
       requestAnimationFrame(()=>{ 
@@ -56,7 +57,9 @@ export async function startCutscene(){
           lastTime = currentTime;
           
           scale += zoomSpeed * deltaTime;
-          canvas.style.transform = `scale(${scale})`;
+          if (canvasWrapper) {
+              canvasWrapper.style.transform = `scale(${scale})`;
+          }
 
           zoomRafId = requestAnimationFrame(zoomLoop);
         }
