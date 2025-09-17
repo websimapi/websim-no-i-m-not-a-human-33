@@ -3,10 +3,6 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   if (!gl) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   let animationFrameId = null;
-  let uniformValues = {
-    scale: 1.0,
-    origin: [0.5, 0.6],
-  };
 
   const resize = () => {
     const w = Math.floor(innerWidth * dpr), h = Math.floor(innerHeight * dpr);
@@ -30,8 +26,7 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   uniform float uLevels;
   uniform float uEdgeMix;
   uniform float uTime;
-  uniform float uScale;
-  uniform vec2 uOrigin;
+  uniform float uFogSpread;
   varying vec2 vUV;
 
   float luma(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }
@@ -63,12 +58,10 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   }
 
   void main(){
-    vec2 effectUV = (vUV - uOrigin) / uScale + uOrigin;
-
-    float skyMask = smoothstep(0.45, 0.0, effectUV.y); // 1 at top, 0 by ~45% down
+    float skyMask = smoothstep(0.45, 0.0, vUV.y); // 1 at top, 0 by ~45% down
 
     // Lava lamp displacement
-    vec2 motion = vec2(fbm(effectUV * 2.5 + uTime * 0.08), fbm(effectUV * 2.5 - uTime * 0.08));
+    vec2 motion = vec2(fbm(vUV * 2.5 + uTime * 0.08), fbm(vUV * 2.5 - uTime * 0.08));
     vec2 distortedUV = vUV + (motion - 0.5) * 0.1 * skyMask; // Apply displacement based on mask. Increased from 0.05
 
     vec3 col = texture2D(uTex0, distortedUV).rgb;
@@ -98,7 +91,7 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
     vec3 postEdge = mix(post, post*edgeCol, uEdgeMix);
     
     // Weaken the posterize/edge effect in the land area, similar to before
-    float posterizeStrengthMask = smoothstep(0.40, 0.80, effectUV.y); // 0 in sky, 1 in land
+    float posterizeStrengthMask = smoothstep(0.40, 0.80, vUV.y); // 0 in sky, 1 in land
     vec3 orig = texture2D(uTex0, distortedUV).rgb;
     vec3 finalCol = mix(postEdge, orig, posterizeStrengthMask * 0.5); // blend back original color in land
 
@@ -141,9 +134,10 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   const uLevels = gl.getUniformLocation(prog, 'uLevels');
   const uEdgeMix = gl.getUniformLocation(prog, 'uEdgeMix');
   const uTime = gl.getUniformLocation(prog, 'uTime');
-  const uScale = gl.getUniformLocation(prog, 'uScale');
-  const uOrigin = gl.getUniformLocation(prog, 'uOrigin');
+  const uFogSpread = gl.getUniformLocation(prog, 'uFogSpread'); // Get new uniform location
   const startTime = performance.now();
+
+  let fogSpreadValue = 0.0; // Initial fog spread
 
   function draw() {
     const time = (performance.now() - startTime) / 1000.0;
@@ -153,8 +147,7 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
     gl.uniform1f(uLevels, levels);
     gl.uniform1f(uEdgeMix, edgeMix);
     gl.uniform1f(uTime, time);
-    gl.uniform1f(uScale, uniformValues.scale);
-    gl.uniform2f(uOrigin, uniformValues.origin[0], uniformValues.origin[1]);
+    gl.uniform1f(uFogSpread, fogSpreadValue); // Set the fog spread uniform
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -167,17 +160,16 @@ export function applyPosterizeToImage(canvas, image, levels = 5.0, edgeMix = 0.1
   animate();
   window.addEventListener('resize', resize, { passive: true });
 
-  // Return an object with cleanup and update methods
+  // Return an object with cleanup and an update method for the new uniform
   return {
-    setUniforms: (newUniforms) => {
-        Object.assign(uniformValues, newUniforms);
-    },
-    cleanup: () => {
-      if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
+      cleanup: () => {
+          if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+          }
+           window.removeEventListener('resize', resize);
+      },
+      updateFogSpread: (value) => {
+          fogSpreadValue = value;
       }
-      window.removeEventListener('resize', resize);
-      // Consider cleaning up other resources if this component can be destroyed
-    }
   };
 }

@@ -5,7 +5,7 @@ import { animateBirds, stopBirds } from './birds.js';
 export async function startCutscene(){
   const cs=document.getElementById('cutscene'), img=document.createElement('img'); img.id='cutscene-image'; img.alt='Cutscene scene'; cs.prepend(img);
   const canvas=document.getElementById('cutscene-canvas'); const loading=cs.querySelector('.cutscene-loading'); cs.style.display='flex'; loading.style.display='grid';
-  let posterizeEffect = null;
+  let posterEffect = null;
   let transitionStarted = false;
   let zoomRafId = null;
 
@@ -21,7 +21,7 @@ export async function startCutscene(){
 
   img.onload=()=>{ 
     loading.style.display='none'; 
-    posterizeEffect = applyPosterizeToImage(canvas, img, 5.0, 0.12); 
+    posterEffect = applyPosterizeToImage(canvas, img, 5.0, 0.12); 
     canvas.classList.add('reveal'); 
     img.style.display='none'; 
     animateBirds(()=>goNext()); 
@@ -40,17 +40,19 @@ export async function startCutscene(){
 
     canvas.classList.remove('reveal');
     await new Promise(r=>setTimeout(r, 1200));
-    if (posterizeEffect) { try{ posterizeEffect.cleanup(); }catch{} }
+    if (posterEffect) { try{ posterEffect.cleanup(); }catch{} }
     const img2 = new Image(); img2.alt='Cutscene scene 2 - roadside and distant ruins';
     const canvasWrapper = document.getElementById('cutscene-canvas-wrapper');
     img2.onload = ()=>{ 
-      posterizeEffect = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
+      posterEffect = applyPosterizeToImage(canvas, img2, 5.0, 0.12); 
       requestAnimationFrame(()=>{ 
         canvas.classList.add('reveal', 'drive-zoom'); 
         
         let scale = 1.0;
         let lastTime = performance.now();
+        const zoomStartTime = performance.now();
         const zoomSpeed = 0.05; // Adjust this value to control zoom speed (scale increase per second)
+        const fogSpreadDuration = 15000; // 15 seconds for fog to cover the screen
 
         function zoomLoop(currentTime) {
           const deltaTime = (currentTime - lastTime) / 1000; // time in seconds
@@ -60,8 +62,13 @@ export async function startCutscene(){
           if (canvasWrapper) {
               canvasWrapper.style.transform = `scale(${scale})`;
           }
-          if (posterizeEffect) {
-              posterizeEffect.setUniforms({ scale: scale });
+          
+          // Animate fog spread
+          if (posterEffect && posterEffect.updateFogSpread) {
+              const fogElapsed = currentTime - zoomStartTime;
+              const fogProgress = Math.min(fogElapsed / fogSpreadDuration, 1.0);
+              const fogValue = fogProgress * 0.95; // Go from 0 to 0.95
+              posterEffect.updateFogSpread(fogValue);
           }
 
           zoomRafId = requestAnimationFrame(zoomLoop);
