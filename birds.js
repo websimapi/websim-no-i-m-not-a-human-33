@@ -4,6 +4,7 @@ export function animateBirds(onComplete){
   const birds=[]; for(let i=0;i<flockSize;i++){ const el=document.createElement('div'); el.className='bird'; el.style.transform='translate(-100px,-100px)'; flockContainer.appendChild(el); el.style.animationDelay = `${Math.random()*-0.5}s`;
     birds.push({ el, offsetX:(i%2===0?1:-1)*Math.ceil(i/2)*(window.innerWidth*0.025), offsetY:Math.ceil(i/2)*(window.innerHeight*-0.015), wobbleX:Math.random()*20-10, wobbleY:Math.random()*15-7.5, wobbleSpeed:Math.random()*0.5+0.5 });
   }
+  const minOffsetY = Math.min(...birds.map(b=>b.offsetY));
   let rafId, doneCalled=false; function loop(now){
     if(now<startTime){ rafId=requestAnimationFrame(loop); return; }
     const elapsed = now - startTime; let progress = elapsed / journeyDuration;
@@ -18,7 +19,9 @@ export function animateBirds(onComplete){
       const wt=elapsed/1000*b.wobbleSpeed; const dx=Math.sin(wt+i)*b.wobbleX; const dy=Math.cos(wt+i)*b.wobbleY;
       b.el.style.transform = `translate(${leaderX+b.offsetX+dx}px, ${leaderY+b.offsetY+dy}px) scale(${scale})`;
     });
+    if (!doneCalled && (leaderY + minOffsetY) < -30) { doneCalled = true; if (typeof onComplete==='function') onComplete(); }
     rafId=requestAnimationFrame(loop);
   }
   rafId=requestAnimationFrame(loop);
+  return ()=>{ doneCalled=true; try{ cancelAnimationFrame(rafId); }catch{} flockContainer.innerHTML=''; };
 }
