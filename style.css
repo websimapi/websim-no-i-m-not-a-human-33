@@ -563,19 +563,19 @@ h1 .not-word.pulse-red { animation: notPulse 1.2s ease; }
     height: 100dvh;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 9s ease-in-out;
+    transition: opacity 2s ease-in-out; /* Default transition for fade in/out */
     image-rendering: pixelated;
     filter: contrast(1.15) saturate(1.05) brightness(0.98);
+}
+
+#cutscene canvas.fade-in-long {
+    transition-duration: 9s; /* Slower fade-in for first scene */
 }
 
 #cutscene canvas {
     position: absolute; /* Ensure canvas overlays the img for the effect */
     top: 0;
     left: 0;
-}
-
-#cutscene img.reveal { /* This rule is no longer needed for the image */
-    opacity: 1;
 }
 
 #cutscene canvas.reveal {
@@ -628,7 +628,7 @@ h1 .not-word.pulse-red { animation: notPulse 1.2s ease; }
     will-change: transform;
     filter: contrast(1.1) brightness(0.6) blur(0.5px);
     opacity: 0;
-    transition: opacity 3.0s ease-in; /* Was 1.5s. */
+    transition: opacity 1.2s ease-in-out;
 }
 
 @keyframes flap {
