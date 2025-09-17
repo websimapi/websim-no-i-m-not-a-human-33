@@ -2,6 +2,9 @@ import { applyPosterizeToImage } from './posterize.js';
 import { audioCtx, getBackgroundAudio } from './audio.js';
 import { animateBirds } from './birds.js';
 
+const roadsidePreload = new Image();
+roadsidePreload.src = 'cutscene_roadside.png';
+
 export async function startCutscene(){
   const cs=document.getElementById('cutscene'), img=document.createElement('img'); img.id='cutscene-image'; img.alt='Cutscene scene'; cs.prepend(img);
   const canvas=document.getElementById('cutscene-canvas'); const loading=cs.querySelector('.cutscene-loading'); cs.style.display='flex'; loading.style.display='grid';
@@ -24,6 +27,7 @@ export async function startCutscene(){
 }
 
 function setupSkip(cancelBirds, goNext){
+  const cs = document.getElementById('cutscene');
   const handler = ()=>{ try{ cancelBirds && cancelBirds(); }catch{} goNext(); cs.removeEventListener('click', handler); };
   cs.addEventListener('click', handler, { once:true });
 }
